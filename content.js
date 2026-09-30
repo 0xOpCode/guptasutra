@@ -87,10 +87,22 @@
     }
   }
 
+  const SAFE_EMOJIS = [
+    "👍", "👌", "🤝", "☕", "✨", "🎯", "🚀", "💡", "📌", "📝", "✅", "⚡", "🫡", "🙌", "👋", "🔥", "💯", "🍀"
+  ];
+
+  function resolveCoverText() {
+    if (state.coverText === "random_emoji") {
+      return SAFE_EMOJIS[Math.floor(Math.random() * SAFE_EMOJIS.length)];
+    }
+    return state.coverText || "Sounds good, let us meet tomorrow.";
+  }
+
   async function dispatchEncryptedMessage(composer, rawText) {
     try {
+      const cover = resolveCoverText();
       const encrypted = await GuptasutraCrypto.encrypt(rawText, state.passphrase);
-      const stegoMessage = GuptasutraStego.embed(state.coverText, encrypted);
+      const stegoMessage = GuptasutraStego.embed(cover, encrypted);
 
       const byteLength = new TextEncoder().encode(stegoMessage).length;
       if (byteLength > MAX_SAFE_BYTE_LENGTH) {
