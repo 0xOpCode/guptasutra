@@ -29,22 +29,25 @@
     return document.querySelectorAll('div[data-id], div.message-in, div.message-out');
   }
 
-  function setComposerText(inputNode, text) {
+  async function setComposerText(inputNode, text) {
     inputNode.focus();
 
-    inputNode.dispatchEvent(
-      new KeyboardEvent("keydown", {
-        key: "a",
-        code: "KeyA",
-        keyCode: 65,
-        which: 65,
-        ctrlKey: true,
-        bubbles: true
-      })
-    );
+    await new Promise((resolve) => {
+      let timeout = null;
+      const handler = () => {
+        clearTimeout(timeout);
+        window.removeEventListener("guptasutra-text-ready", handler);
+        resolve();
+      };
 
-    document.execCommand("insertText", false, text);
-    inputNode.dispatchEvent(new InputEvent("input", { bubbles: true, composed: true }));
+      window.addEventListener("guptasutra-text-ready", handler);
+      window.dispatchEvent(new CustomEvent("guptasutra-set-text", { detail: { text } }));
+
+      timeout = setTimeout(() => {
+        window.removeEventListener("guptasutra-text-ready", handler);
+        resolve();
+      }, 150);
+    });
   }
 
   root.GuptasutraAdapter = {

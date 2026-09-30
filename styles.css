@@ -32,13 +32,13 @@
 }
 
 .guptasutra-badge {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 4px;
-  padding: 2px 8px;
+  margin-top: 6px;
+  padding: 3px 8px;
   border-radius: 6px;
-  background-color: rgba(6, 78, 59, 0.45);
+  background-color: rgba(6, 78, 59, 0.5);
   border-left: 2px solid #10b981;
   font-family: inherit;
   font-size: 13px;
@@ -46,6 +46,9 @@
   color: #ffffff;
   word-break: break-word;
   white-space: pre-wrap;
+  width: fit-content;
+  max-width: 100%;
+  clear: both;
 }
 
 .guptasutra-icon {
@@ -62,7 +65,7 @@
 
 .guptasutra-badge.error {
   border-left-color: #ef4444;
-  background-color: rgba(127, 29, 29, 0.4);
+  background-color: rgba(127, 29, 29, 0.45);
   color: #fca5a5;
   font-size: 12px;
 }

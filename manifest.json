@@ -28,6 +28,16 @@
         "https://web.whatsapp.com/*"
       ],
       "js": [
+        "bridge.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://web.whatsapp.com/*"
+      ],
+      "js": [
         "crypto.js",
         "stego.js",
         "adapter.js",
