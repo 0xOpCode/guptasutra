@@ -1,6 +1,8 @@
 (() => {
   console.log("[Guptasutra] Content script loaded.");
 
+  const MAX_SAFE_BYTE_LENGTH = 60000;
+
   let state = {
     passphrase: "",
     enabled: true,
@@ -9,6 +11,7 @@
 
   let isBypassingSend = false;
   let scanTimeout = null;
+  let alertTimeout = null;
 
   chrome.storage.local.get(["passphrase", "enabled", "coverText"], (stored) => {
     if (stored.passphrase !== undefined) state.passphrase = stored.passphrase;
@@ -26,6 +29,19 @@
     updateToggleUI();
     reprocessAllMessages();
   });
+
+  function flashToggleAlert(text) {
+    const toggle = document.getElementById("guptasutra-floating-toggle");
+    if (!toggle) return;
+
+    clearTimeout(alertTimeout);
+    toggle.className = "guptasutra-floating-toggle error";
+    toggle.innerHTML = `<span>⚠️</span><span>${text}</span>`;
+
+    alertTimeout = setTimeout(() => {
+      updateToggleUI();
+    }, 3500);
+  }
 
   function renderFloatingToggle() {
     const footer = document.querySelector("footer");
@@ -71,6 +87,46 @@
     }
   }
 
+  async function dispatchEncryptedMessage(composer, rawText) {
+    try {
+      const encrypted = await GuptasutraCrypto.encrypt(rawText, state.passphrase);
+      const stegoMessage = GuptasutraStego.embed(state.coverText, encrypted);
+
+      const byteLength = new TextEncoder().encode(stegoMessage).length;
+      if (byteLength > MAX_SAFE_BYTE_LENGTH) {
+        isBypassingSend = false;
+        flashToggleAlert("Too Large: Exceeds 60KB");
+        return;
+      }
+
+      isBypassingSend = true;
+      const success = await GuptasutraAdapter.setComposerText(composer, stegoMessage);
+      if (!success) {
+        isBypassingSend = false;
+        flashToggleAlert("Insertion Failed");
+        return;
+      }
+
+      const composerText = composer.textContent || "";
+      if (!composerText.includes(GuptasutraStego.MAGIC_HEADER)) {
+        isBypassingSend = false;
+        flashToggleAlert("Payload Missing: Aborted");
+        console.error("[Guptasutra] Assertion failed: Magic header absent before dispatch.");
+        return;
+      }
+
+      const sendBtn = await GuptasutraAdapter.waitForSendButton(1000);
+      if (sendBtn) {
+        sendBtn.click();
+      }
+      isBypassingSend = false;
+    } catch (err) {
+      isBypassingSend = false;
+      flashToggleAlert("Encryption Error");
+      console.error("[Guptasutra] Encryption error:", err);
+    }
+  }
+
   async function handleKeydown(e) {
     if (e.key !== "Enter" || e.shiftKey) return;
     if (!state.enabled || !state.passphrase || isBypassingSend) return;
@@ -86,22 +142,7 @@
     e.stopPropagation();
     e.stopImmediatePropagation();
 
-    try {
-      const encrypted = await GuptasutraCrypto.encrypt(rawText, state.passphrase);
-      const stegoMessage = GuptasutraStego.embed(state.coverText, encrypted);
-
-      isBypassingSend = true;
-      await GuptasutraAdapter.setComposerText(composer, stegoMessage);
-
-      const sendBtn = await GuptasutraAdapter.waitForSendButton(1000);
-      if (sendBtn) {
-        sendBtn.click();
-      }
-      isBypassingSend = false;
-    } catch (err) {
-      isBypassingSend = false;
-      console.error("[Guptasutra] Encryption error:", err);
-    }
+    await dispatchEncryptedMessage(composer, rawText);
   }
 
   async function handleClick(e) {
@@ -120,22 +161,7 @@
     e.stopPropagation();
     e.stopImmediatePropagation();
 
-    try {
-      const encrypted = await GuptasutraCrypto.encrypt(rawText, state.passphrase);
-      const stegoMessage = GuptasutraStego.embed(state.coverText, encrypted);
-
-      isBypassingSend = true;
-      await GuptasutraAdapter.setComposerText(composer, stegoMessage);
-
-      const sendBtn = await GuptasutraAdapter.waitForSendButton(1000);
-      if (sendBtn) {
-        sendBtn.click();
-      }
-      isBypassingSend = false;
-    } catch (err) {
-      isBypassingSend = false;
-      console.error("[Guptasutra] Encryption error:", err);
-    }
+    await dispatchEncryptedMessage(composer, rawText);
   }
 
   window.addEventListener("keydown", handleKeydown, true);

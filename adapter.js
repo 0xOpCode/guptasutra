@@ -32,12 +32,12 @@
   async function setComposerText(inputNode, text) {
     inputNode.focus();
 
-    await new Promise((resolve) => {
+    return new Promise((resolve) => {
       let timeout = null;
       const handler = () => {
         clearTimeout(timeout);
         window.removeEventListener("guptasutra-text-ready", handler);
-        resolve();
+        resolve(true);
       };
 
       window.addEventListener("guptasutra-text-ready", handler);
@@ -45,8 +45,8 @@
 
       timeout = setTimeout(() => {
         window.removeEventListener("guptasutra-text-ready", handler);
-        resolve();
-      }, 150);
+        resolve(false);
+      }, 500);
     });
   }
 

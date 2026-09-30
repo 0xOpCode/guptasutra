@@ -31,6 +31,12 @@
   color: #9ca3af;
 }
 
+.guptasutra-floating-toggle.error {
+  border-color: #ef4444;
+  background-color: #7f1d1d;
+  color: #fecaca;
+}
+
 .guptasutra-badge {
   display: flex;
   align-items: center;
