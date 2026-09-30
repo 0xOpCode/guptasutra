@@ -8,8 +8,8 @@
     const ed = tb.__lexicalEditor;
     if (ed && ed._commands) {
       for (const [key] of ed._commands) {
-        if (key && key.type === "SELECT_ALL_COMMAND") {
-          ed.dispatchCommand(key, new KeyboardEvent("keydown"));
+        if (key && key.type === "CLEAR_EDITOR_COMMAND") {
+          ed.dispatchCommand(key, undefined);
           break;
         }
       }

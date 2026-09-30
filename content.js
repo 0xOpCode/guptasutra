@@ -91,7 +91,7 @@
       const stegoMessage = GuptasutraStego.embed(state.coverText, encrypted);
 
       isBypassingSend = true;
-      GuptasutraAdapter.setComposerText(composer, stegoMessage);
+      await GuptasutraAdapter.setComposerText(composer, stegoMessage);
 
       const sendBtn = await GuptasutraAdapter.waitForSendButton(1000);
       if (sendBtn) {
@@ -125,7 +125,7 @@
       const stegoMessage = GuptasutraStego.embed(state.coverText, encrypted);
 
       isBypassingSend = true;
-      GuptasutraAdapter.setComposerText(composer, stegoMessage);
+      await GuptasutraAdapter.setComposerText(composer, stegoMessage);
 
       const sendBtn = await GuptasutraAdapter.waitForSendButton(1000);
       if (sendBtn) {
