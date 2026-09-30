@@ -15,7 +15,7 @@
     )?.closest("button") || null;
   }
 
-  async function waitForSendButton(timeoutMs = 1000) {
+  async function waitForSendButton(timeoutMs = 2000) {
     const start = Date.now();
     while (Date.now() - start < timeoutMs) {
       const btn = getSendButton();
@@ -46,7 +46,7 @@
       timeout = setTimeout(() => {
         window.removeEventListener("guptasutra-text-ready", handler);
         resolve(false);
-      }, 500);
+      }, 1500);
     });
   }
 

@@ -152,7 +152,7 @@
 
   async function handleKeydown(e) {
     if (e.key !== "Enter" || e.shiftKey) return;
-    if (!state.enabled || !state.passphrase || isBypassingSend) return;
+    if (!state.enabled || isBypassingSend) return;
 
     const composer = GuptasutraAdapter.getComposerInput();
     if (!composer) return;
@@ -160,6 +160,14 @@
 
     const rawText = composer.innerText.trim();
     if (!rawText) return;
+
+    if (!state.passphrase) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      flashRailAlert("Key Missing: Set in Popup");
+      return;
+    }
 
     e.preventDefault();
     e.stopPropagation();
@@ -169,7 +177,7 @@
   }
 
   async function handleClick(e) {
-    if (!state.enabled || !state.passphrase || isBypassingSend) return;
+    if (!state.enabled || isBypassingSend) return;
 
     const targetSend = e.target.closest('button[aria-label="Send"], span[data-icon*="send"]');
     if (!targetSend) return;
@@ -179,6 +187,14 @@
 
     const rawText = composer.innerText.trim();
     if (!rawText) return;
+
+    if (!state.passphrase) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      flashRailAlert("Key Missing: Set in Popup");
+      return;
+    }
 
     e.preventDefault();
     e.stopPropagation();
