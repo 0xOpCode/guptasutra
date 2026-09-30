@@ -5,6 +5,20 @@
   const SALT_LENGTH_BYTES = 16;
   const IV_LENGTH_BYTES = 12;
 
+  async function compressText(text) {
+    const stream = new Blob([text]).stream().pipeThrough(new CompressionStream("deflate"));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+
+  async function decompressBytes(bytes) {
+    try {
+      const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate"));
+      return await new Response(stream).text();
+    } catch {
+      return new TextDecoder().decode(bytes);
+    }
+  }
+
   async function deriveKey(passphrase, salt) {
     const enc = new TextEncoder();
     const rawKey = await window.crypto.subtle.importKey(
@@ -30,7 +44,7 @@
   }
 
   async function encrypt(plaintext, passphrase) {
-    const enc = new TextEncoder();
+    const compressed = await compressText(plaintext);
     const salt = window.crypto.getRandomValues(new Uint8Array(SALT_LENGTH_BYTES));
     const iv = window.crypto.getRandomValues(new Uint8Array(IV_LENGTH_BYTES));
     const key = await deriveKey(passphrase, salt);
@@ -38,7 +52,7 @@
     const ciphertext = await window.crypto.subtle.encrypt(
       { name: "AES-GCM", iv: iv },
       key,
-      enc.encode(plaintext)
+      compressed
     );
 
     const packed = new Uint8Array(salt.length + iv.length + ciphertext.byteLength);
@@ -58,14 +72,13 @@
     const ciphertext = packedBytes.slice(SALT_LENGTH_BYTES + IV_LENGTH_BYTES);
 
     const key = await deriveKey(passphrase, salt);
-    const decrypted = await window.crypto.subtle.decrypt(
+    const decryptedBytes = await window.crypto.subtle.decrypt(
       { name: "AES-GCM", iv: iv },
       key,
       ciphertext
     );
 
-    const dec = new TextDecoder();
-    return dec.decode(decrypted);
+    return await decompressBytes(new Uint8Array(decryptedBytes));
   }
 
   root.GuptasutraCrypto = { encrypt, decrypt };

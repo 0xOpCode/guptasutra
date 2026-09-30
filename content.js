@@ -144,15 +144,27 @@
   async function processBubble(bubble) {
     if (bubble.dataset.guptasutraProcessed === "true") return;
 
-    const rawContent = bubble.textContent || "";
+    let rawContent = bubble.textContent || "";
     if (!rawContent.includes(GuptasutraStego.MAGIC_HEADER)) {
       return;
+    }
+
+    const readMoreBtn = Array.from(bubble.querySelectorAll('[role="button"], span, div')).find(
+      (el) => el.innerText?.trim() === "Read more"
+    );
+    if (readMoreBtn) {
+      readMoreBtn.click();
+      await new Promise((r) => setTimeout(r, 60));
+      rawContent = bubble.textContent || "";
     }
 
     const extracted = GuptasutraStego.extract(rawContent);
     if (!extracted) return;
 
     bubble.dataset.guptasutraProcessed = "true";
+    if (readMoreBtn) {
+      readMoreBtn.style.display = "none";
+    }
 
     const badge = document.createElement("div");
     badge.className = "guptasutra-badge";
