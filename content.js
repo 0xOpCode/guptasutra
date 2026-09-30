@@ -159,10 +159,7 @@
 
     if (!state.passphrase) {
       badge.className = "guptasutra-badge error";
-      badge.innerHTML = `
-        <div class="guptasutra-badge-header">🔒 Guptasutra Encrypted</div>
-        <div class="guptasutra-plaintext">Set matching passphrase in extension popup to view.</div>
-      `;
+      badge.innerHTML = `<span class="guptasutra-icon">🔒</span><span class="guptasutra-text">Passphrase required</span>`;
       const target = bubble.querySelector(".selectable-text") || bubble;
       target.appendChild(badge);
       return;
@@ -170,18 +167,12 @@
 
     try {
       const plaintext = await GuptasutraCrypto.decrypt(extracted.payload, state.passphrase);
-      badge.innerHTML = `
-        <div class="guptasutra-badge-header">🔓 Guptasutra Decrypted</div>
-        <div class="guptasutra-plaintext">${escapeHTML(plaintext)}</div>
-      `;
+      badge.innerHTML = `<span class="guptasutra-icon">🔓</span><span class="guptasutra-text">${escapeHTML(plaintext)}</span>`;
       const target = bubble.querySelector(".selectable-text") || bubble;
       target.appendChild(badge);
     } catch (err) {
       badge.className = "guptasutra-badge error";
-      badge.innerHTML = `
-        <div class="guptasutra-badge-header">🔒 Decryption Failed</div>
-        <div class="guptasutra-plaintext">Incorrect passphrase.</div>
-      `;
+      badge.innerHTML = `<span class="guptasutra-icon">🔒</span><span class="guptasutra-text">Wrong passphrase</span>`;
       const target = bubble.querySelector(".selectable-text") || bubble;
       target.appendChild(badge);
     }
