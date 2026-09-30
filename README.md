@@ -17,9 +17,9 @@
 
 ## Overview
 
-Chat platforms inspect message content, trigger spam filters, and log plaintext payloads. Overt encryption tools produce recognizable PGP armor or hex strings that draw scrutiny.
+I built Guptasutra to solve covert communication on modern web chat platforms. Chat platforms inspect message content, trigger keyword filters, and store plaintext logs on remote servers. Overt encryption tools produce obvious PGP blocks or raw hex dumps that draw immediate suspicion.
 
-Guptasutra embeds authenticated, encrypted data into normal chat conversations without visual disruption. The extension compresses plaintext, encrypts the stream with AES-256-GCM, and converts binary ciphertext into invisible Unicode characters (`\u200B`, `\u200C`, `\u200D`, `\uFEFF`). Observers, network monitors, and host application servers inspect a standard cover message or neutral emoji. Users with the matching shared key see decrypted plaintext rendered in-line.
+I designed Guptasutra to embed authenticated, encrypted payloads into everyday conversation text without visual distortion. The extension compresses plaintext, encrypts the output with AES-256-GCM, and converts the binary ciphertext into invisible base-4 Unicode characters (`\u200B`, `\u200C`, `\u200D`, `\uFEFF`). Observers, network monitors, and host application servers inspect a standard decoy sentence or neutral emoji. Recipients with the matching shared key read the decrypted plaintext in-line.
 
 ```
 +------------------+      +-------------------+      +-------------------------+
@@ -38,12 +38,12 @@ Guptasutra embeds authenticated, encrypted data into normal chat conversations w
 ## Key Technical Highlights
 
 ### 1. Lexical State Machine Hooking (`bridge.js`)
-Modern WhatsApp Web uses Meta's Lexical framework. Lexical ignores standard synthetic browser keyboard events (`isTrusted: false`) and rejects standard input value updates. Guptasutra deploys a two-tier execution model:
-- **Main World (`bridge.js`)**: Executes in the page context (`world: "MAIN"`) to access `element.__lexicalEditor`. Dispatches internal `CLEAR_EDITOR_COMMAND` signals and updates Lexical document nodes.
-- **Isolated World (`content.js`, `adapter.js`)**: Manages browser storage, handles encryption routines, and communicates with the main world via decoupled DOM events (`__guptasutra_set_text`).
+Meta builds WhatsApp Web on top of the Lexical rich-text framework. Lexical ignores untrusted synthetic browser keyboard events (`isTrusted: false`) and rejects standard input value updates. I solved this by splitting execution across two runtime worlds:
+- **Main World (`bridge.js`)**: Executes in the page context (`world: "MAIN"`) to access `element.__lexicalEditor`. I dispatch internal `CLEAR_EDITOR_COMMAND` signals and write new text nodes to the Lexical document tree.
+- **Isolated World (`content.js`, `adapter.js`)**: Manages browser storage, executes the cryptographic pipeline, and dispatches custom DOM events (`__guptasutra_set_text`) across the boundary.
 
 ### 2. Base-4 Steganographic Codec (`stego.js`)
-Guptasutra maps every byte into four dibits (2 bits each), encoded using four non-printing Unicode characters:
+I mapped raw payload bytes into two-bit dibits, encoded across four non-printing Unicode characters:
 
 | Bits | Hex Codepoint | Unicode Name | Byte Representation |
 | :---: | :---: | :--- | :--- |
@@ -53,23 +53,23 @@ Guptasutra maps every byte into four dibits (2 bits each), encoded using four no
 | `11` | `\uFEFF` | Zero Width No-Break Space (BOM) | `EF BB BF` |
 
 ### 3. Framing & Magic Sync Header
-Chat platforms append metadata, timestamps, and read receipts to the DOM. Guptasutra isolates hidden payloads using structured framing:
+WhatsApp appends timestamps, read receipts, and system metadata to chat message containers. To prevent parser failures, I designed a structured binary frame:
 - **Sync Header (6 codepoints)**: `\u200C\u200D\u200C\u200D\uFEFF\uFEFF`
-- **Length Header (16 codepoints)**: 32-bit big-endian integer indicating total payload characters.
+- **Length Header (16 codepoints)**: 32-bit big-endian integer tracking total payload characters.
 - **Payload Data**: Base-4 encoded ciphertext stream.
-- **Parser Guarantee**: The decoder ignores any zero-width characters outside this frame boundary.
+- **Boundary Defense**: My decoder discards extraneous non-printing characters outside this frame boundary.
 
 ### 4. Wire Compression Pipeline (`crypto.js`)
-Zero-width characters expand 1 byte of raw data into 12 UTF-8 wire bytes. Guptasutra runs raw text through browser-standard `CompressionStream("deflate")` before encryption:
-- 3,200 character text message shrinks down to ~484 zero-width code points.
-- Keeps large payloads well within WhatsApp client-side message length limits.
+Zero-width Unicode characters inflate each byte of raw data into three to four UTF-8 wire bytes. To prevent messages from exceeding WhatsApp client-side size boundaries, I pipe raw input through browser-standard `CompressionStream("deflate")` prior to encryption. This step shrinks 3,200 plaintext characters down to ~484 zero-width code points.
 
 ### 5. Native Sidebar Docking (`styles.css`)
-Guptasutra injects a 40x40 toggle button into WhatsApp Web's left navigation rail, positioned above Settings. The button matches WhatsApp's dark/light design system, SVG stroke weights, and hover states.
+Instead of cluttering the chat window with floating overlays, I docked a custom 40x40 action button into WhatsApp Web's left navigation rail, positioned above Settings. The button matches WhatsApp's dark and light design system, SVG stroke weights, and hover states.
 
 ---
 
 ## Cryptographic Specification
+
+I selected AES-256-GCM authenticated encryption paired with PBKDF2-HMAC-SHA-256 key derivation. Every message generates a fresh 16-byte salt and 12-byte initialization vector.
 
 ```
 Passphrase + Salt (16B)
@@ -90,7 +90,7 @@ Plaintext -> Deflate -> AES-GCM Encrypt(IV: 12B) -> [Salt (16B) | IV (12B) | Cip
 | **IV / Nonce** | 96 bits (12 bytes) | Fresh CSPRNG random bytes per message |
 | **KDF** | PBKDF2-HMAC-SHA-256 | RFC 8018 |
 | **KDF Iterations**| 100,000 rounds | Hardware-resistant key derivation |
-| **Salt** | 128 bits (16 bytes) | Fresh random salt generated per message |
+| **Salt** | 128 bits (16 bytes) | Fresh CSPRNG random salt per message |
 | **Authentication**| GCM Auth Tag (128 bits) | Guarantees tamper detection and ciphertext integrity |
 | **Compression** | Deflate raw stream | Pre-encryption stream reduction via `CompressionStream` |
 
@@ -176,10 +176,21 @@ sequenceDiagram
 
 ## Threat Model & Constraints
 
-- **Covert Channel Resistance**: Network eavesdroppers and metadata scrapers see normal WhatsApp packets containing valid UTF-8 strings. Zero-width code points do not trigger standard keyword filters.
+- **Covert Channel Resistance**: Network eavesdroppers and metadata scrapers inspect normal WhatsApp packets containing valid UTF-8 strings. Zero-width code points do not trigger standard keyword filters.
 - **Ciphertext Integrity**: Tampered payloads fail AES-GCM authentication tag verification. Corrupted messages fail to decrypt and display clear error states rather than exposing garbage memory.
 - **Client Sanitization**: If WhatsApp modifies or strips non-printing characters in future web client releases, the sync header check halts execution without sending raw plaintext.
 - **Passphrase Secrecy**: The system relies on the secrecy of the shared passphrase. Choose high-entropy passwords (minimum 16 characters) to resist offline dictionary attacks.
+
+---
+
+## Issues & Technical Suggestions
+
+WhatsApp updates its client-side DOM structure and Lexical bindings on new web releases. If a WhatsApp update alters composer classes or breaks message pill injection, open an issue under [GitHub Issues](https://github.com/0xOpCode/guptasutra/issues).
+
+I also welcome technical discussions and suggestions around:
+- WebAssembly (WASM) cryptographic core compilation for tamper resistance.
+- Alternative homoglyphic and whitespace steganography schemes.
+- Multi-party ratchet key exchange mechanisms.
 
 ---
 
