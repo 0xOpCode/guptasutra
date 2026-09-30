@@ -1,40 +1,51 @@
-.guptasutra-floating-toggle {
-  position: absolute;
-  top: -38px;
-  right: 24px;
-  z-index: 9999;
+.guptasutra-rail-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  border-radius: 18px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-size: 12px;
-  font-weight: 600;
+  justify-content: center;
+  margin: 4px auto;
+  border: none;
+  background-color: transparent;
+  color: #8696a0;
   cursor: pointer;
-  border: 1px solid #059669;
-  background-color: #064e3b;
-  color: #a7f3d0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  transition: background-color 0.15s ease, transform 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
   user-select: none;
+  padding: 0;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
-.guptasutra-floating-toggle:hover {
-  transform: translateY(-1px);
-  background-color: #047857;
+.guptasutra-rail-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #d1d7db;
 }
 
-.guptasutra-floating-toggle.disabled {
-  border-color: #4b5563;
-  background-color: #1f2937;
-  color: #9ca3af;
+.guptasutra-rail-btn.active {
+  color: #10b981;
+  background-color: rgba(16, 185, 129, 0.15);
 }
 
-.guptasutra-floating-toggle.error {
-  border-color: #ef4444;
-  background-color: #7f1d1d;
-  color: #fecaca;
+.guptasutra-rail-btn.active:hover {
+  background-color: rgba(16, 185, 129, 0.25);
+  color: #34d399;
+}
+
+.guptasutra-rail-btn.warning {
+  color: #f59e0b;
+  background-color: rgba(245, 158, 11, 0.15);
+}
+
+.guptasutra-rail-btn.error {
+  color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+.guptasutra-rail-btn svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
 }
 
 .guptasutra-badge {
